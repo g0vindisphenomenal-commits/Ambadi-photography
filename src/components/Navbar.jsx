@@ -91,6 +91,11 @@ const BURGER_TRANSFORMS = BARS.map(({ box: [x0, y0, x1, y1] }, idx) => {
   };
 });
 
+const formatMatrix = ({ scaleX, scaleY, x, y }) =>
+  `matrix(${scaleX} 0 0 ${scaleY} ${x} ${y})`;
+
+const INITIAL_MATRICES = BURGER_TRANSFORMS.map(formatMatrix);
+
 const MENU_ITEMS = [
   { label: 'HOME', href: '#top', edgeClass: 'edge-flat' },
   { label: 'WORK', href: '#work', edgeClass: 'edge-sharp' },
@@ -130,6 +135,7 @@ export default function Navbar({ onReplayPreloader, preloaderDone }) {
   const heartbeatTlRef = useRef(null);
   const menuTlRef = useRef(null);
   const progressProxyRef = useRef({ p: 0 });
+  const barProxiesRef = useRef(BURGER_TRANSFORMS.map((t) => ({ ...t })));
   const isHoveredRef = useRef(false);
   const menuOpenRef = useRef(false);
 
@@ -137,55 +143,81 @@ export default function Navbar({ onReplayPreloader, preloaderDone }) {
     return Math.min(1.5, Math.max(1, 0.4 + (0.6 * window.innerWidth) / 1440));
   }, []);
 
+  const syncBarTransform = useCallback((idx) => {
+    const mat = formatMatrix(barProxiesRef.current[idx]);
+    const lEl = leftPathsRef.current[idx];
+    const rEl = rightPathsRef.current[idx];
+    if (lEl) {
+      lEl.style.transform = '';
+      lEl.setAttribute('transform', mat);
+    }
+    if (rEl) {
+      rEl.style.transform = '';
+      rEl.setAttribute('transform', mat);
+    }
+  }, []);
+
   // Initialize 12 path pairs into the 3 hamburger bars
-  const applyBurgerRestState = useCallback((immediate = false) => {
-    BARS.forEach((_, idx) => {
-      const pair = [leftPathsRef.current[idx], rightPathsRef.current[idx]].filter(Boolean);
-      if (!pair.length) return;
+  const applyBurgerRestState = useCallback(
+    (immediate = false) => {
       if (immediate) {
-        gsap.set(pair, {
-          svgOrigin: '0 0',
-          ...BURGER_TRANSFORMS[idx],
+        BARS.forEach((_, idx) => {
+          gsap.killTweensOf(barProxiesRef.current[idx]);
+          Object.assign(barProxiesRef.current[idx], BURGER_TRANSFORMS[idx]);
+          syncBarTransform(idx);
         });
-      } else {
-        gsap.to(pair, {
-          svgOrigin: '0 0',
+        return;
+      }
+
+      BARS.forEach((_, idx) => {
+        const proxy = barProxiesRef.current[idx];
+        gsap.to(proxy, {
           ...BURGER_TRANSFORMS[idx],
           duration: 0.55,
           ease: 'power4.out',
           delay: (6 - Math.abs(idx - 5.5)) * 0.03,
           overwrite: true,
+          onUpdate: () => syncBarTransform(idx),
         });
-      }
-    });
-  }, []);
+      });
+    },
+    [syncBarTransform]
+  );
 
   // Morph 3 hamburger lines -> Striped Heart
-  const morphToHeart = useCallback((fast = false) => {
-    const dur = fast ? 0.35 : 0.7;
-    const stag = fast ? 0.012 : 0.03;
+  const morphToHeart = useCallback(
+    (fast = false) => {
+      const dur = fast ? 0.35 : 0.7;
+      const stag = fast ? 0.012 : 0.03;
 
-    BARS.forEach((_, idx) => {
-      const pair = [leftPathsRef.current[idx], rightPathsRef.current[idx]].filter(Boolean);
-      if (!pair.length) return;
-      gsap.to(pair, {
-        svgOrigin: '0 0',
-        x: 0,
-        y: 0,
-        scaleX: 1,
-        scaleY: 1,
-        duration: dur,
-        ease: 'power4.out',
-        delay: Math.abs(idx - 5.5) * stag,
-        overwrite: true,
-        onComplete: () => {
-          if (idx === 6 && !menuOpenRef.current && isHoveredRef.current && heartbeatTlRef.current) {
-            heartbeatTlRef.current.restart();
-          }
-        },
+      BARS.forEach((_, idx) => {
+        const proxy = barProxiesRef.current[idx];
+        gsap.to(proxy, {
+          x: 0,
+          y: 0,
+          scaleX: 1,
+          scaleY: 1,
+          duration: dur,
+          ease: 'power4.out',
+          delay: Math.abs(idx - 5.5) * stag,
+          overwrite: true,
+          onUpdate: () => syncBarTransform(idx),
+          onComplete: () => {
+            syncBarTransform(idx);
+            if (
+              idx === 6 &&
+              !menuOpenRef.current &&
+              isHoveredRef.current &&
+              heartbeatTlRef.current
+            ) {
+              heartbeatTlRef.current.restart();
+            }
+          },
+        });
       });
-    });
-  }, []);
+    },
+    [syncBarTransform]
+  );
 
   // Broken-Heart split & 3-stage hesitant circle clip-path formula
   const updateClipAndHeart = useCallback((e) => {
@@ -597,6 +629,7 @@ export default function Navbar({ onReplayPreloader, preloaderDone }) {
                       key={`l-${idx}`}
                       ref={(el) => (leftPathsRef.current[idx] = el)}
                       d={bar.d}
+                      transform={INITIAL_MATRICES[idx]}
                       fill="currentColor"
                     />
                   ))}
@@ -609,6 +642,7 @@ export default function Navbar({ onReplayPreloader, preloaderDone }) {
                       key={`r-${idx}`}
                       ref={(el) => (rightPathsRef.current[idx] = el)}
                       d={bar.d}
+                      transform={INITIAL_MATRICES[idx]}
                       fill="currentColor"
                     />
                   ))}

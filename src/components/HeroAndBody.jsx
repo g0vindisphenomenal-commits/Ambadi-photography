@@ -624,7 +624,7 @@ export default function HeroAndBody({ preloaderDone }) {
                         <span className="hero-line-inner">Make.</span>
                       </span>
                       <span className="hero-line-mask">
-                        <span className="hero-line-inner">Every Idea.</span>
+                        <span className="hero-line-inner">Every Frame.</span>
                       </span>
                       <span className="hero-line-mask">
                         <span className="hero-line-inner">Matter.</span>
@@ -1499,3 +1499,4 @@ export default function HeroAndBody({ preloaderDone }) {
     </div>
   );
 }
+

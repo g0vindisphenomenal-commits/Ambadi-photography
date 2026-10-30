@@ -5,12 +5,16 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import Preloader from './components/Preloader';
 import Navbar from './components/Navbar';
 import HeroAndBody from './components/HeroAndBody';
+import AlbumPage from './components/AlbumPage';
 
 gsap.registerPlugin(ScrollTrigger);
 
 export default function App() {
   const [showPreloader, setShowPreloader] = useState(true);
   const [preloaderKey, setPreloaderKey] = useState(0);
+  const [currentPage, setCurrentPage] = useState(() =>
+    window.location.hash === '#album' ? 'album' : 'home'
+  );
 
   // Initialize Lenis smooth scrolling & sync with GSAP ScrollTrigger
   useEffect(() => {
@@ -56,6 +60,42 @@ export default function App() {
     setShowPreloader(true);
   }, []);
 
+  const handleNavigate = useCallback((targetPage, href) => {
+    if (targetPage === 'album') {
+      setCurrentPage('album');
+      window.history.pushState(null, '', '#album');
+      window.scrollTo({ top: 0, behavior: 'instant' });
+      setTimeout(() => ScrollTrigger.refresh(), 100);
+      return;
+    }
+
+    setCurrentPage('home');
+    window.history.pushState(null, '', href || '#top');
+    setTimeout(() => {
+      ScrollTrigger.refresh();
+      if (href && href !== '#top') {
+        const targetSection = document.querySelector(href);
+        if (targetSection) {
+          targetSection.scrollIntoView({ behavior: 'smooth' });
+          return;
+        }
+      }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 80);
+  }, []);
+
+  useEffect(() => {
+    const onPopState = () => {
+      if (window.location.hash === '#album') {
+        setCurrentPage('album');
+      } else {
+        setCurrentPage('home');
+      }
+    };
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, []);
+
   return (
     <>
       {showPreloader && (
@@ -64,8 +104,17 @@ export default function App() {
       <Navbar
         onReplayPreloader={handleReplayPreloader}
         preloaderDone={!showPreloader}
+        currentPage={currentPage}
+        onNavigate={handleNavigate}
       />
-      <HeroAndBody preloaderDone={!showPreloader} />
+      {currentPage === 'album' ? (
+        <AlbumPage onNavigateHome={() => handleNavigate('home', '#top')} />
+      ) : (
+        <HeroAndBody
+          preloaderDone={!showPreloader}
+          onOpenAlbum={() => handleNavigate('album', '#album')}
+        />
+      )}
     </>
   );
 }

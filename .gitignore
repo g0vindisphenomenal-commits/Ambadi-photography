@@ -4,6 +4,7 @@ dist
 *.local
 
 # Reference screen recordings in root (keep built preloader video in public/videos/)
+/*.mp4
 hamburger menu.mp4
 hero section and body ignore header.mp4
 prealoder video for build.mp4

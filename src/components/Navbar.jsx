@@ -97,11 +97,11 @@ const formatMatrix = ({ scaleX, scaleY, x, y }) =>
 const INITIAL_MATRICES = BURGER_TRANSFORMS.map(formatMatrix);
 
 const MENU_ITEMS = [
-  { label: 'HOME', href: '#top', edgeClass: 'edge-flat' },
-  { label: 'WORK', href: '#work', edgeClass: 'edge-sharp' },
-  { label: 'ABOUT', href: '#culture', edgeClass: 'edge-sharp' },
-  { label: 'B-ROLL', href: '#services', edgeClass: 'edge-flat' },
-  { label: 'PLAYGROUND', href: '#journal', edgeClass: 'edge-flat' },
+  { label: 'HOME', href: '#top', page: 'home', edgeClass: 'edge-flat' },
+  { label: 'ALBUM', href: '#album', page: 'album', edgeClass: 'edge-sharp' },
+  { label: 'ABOUT', href: '#culture', page: 'home', edgeClass: 'edge-sharp' },
+  { label: 'B-ROLL', href: '#services', page: 'home', edgeClass: 'edge-flat' },
+  { label: 'PLAYGROUND', href: '#journal', page: 'home', edgeClass: 'edge-flat' },
 ];
 
 const SOCIAL_LINKS = [
@@ -111,11 +111,17 @@ const SOCIAL_LINKS = [
   { label: 'MAIL', href: 'mailto:hello@ambadiphotography.com' },
 ];
 
-export default function Navbar({ onReplayPreloader, preloaderDone }) {
+export default function Navbar({
+  onReplayPreloader,
+  preloaderDone,
+  currentPage = 'home',
+  onNavigate,
+}) {
   const [tickerOpen, setTickerOpen] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
   const [navAway, setNavAway] = useState(false);
+  const [inBody, setInBody] = useState(false);
 
   const navRef = useRef(null);
   const logoRef = useRef(null);
@@ -329,23 +335,25 @@ export default function Navbar({ onReplayPreloader, preloaderDone }) {
     }
   }, [preloaderDone]);
 
-  // Hide/show navbar on scroll when menu is closed
+  // Track whether user has scrolled past the dark Hero / Banner into the light body
   useEffect(() => {
-    let lastScrollY = window.scrollY;
-    const onScroll = () => {
-      if (menuOpenRef.current) return;
-      const currentY = window.scrollY;
-      const delta = currentY - lastScrollY;
-      if (currentY >= 60 && delta > 5) {
-        setNavAway(true);
-      } else if (delta < -5 || currentY < 40) {
-        setNavAway(false);
+    const checkScrollContext = () => {
+      const darkTopBanner = document.querySelector('.section_hero, .vt-hero, .album-page-title');
+      if (darkTopBanner) {
+        const rect = darkTopBanner.getBoundingClientRect();
+        setInBody(rect.bottom <= 68);
+      } else {
+        setInBody(window.scrollY > 360);
       }
-      lastScrollY = currentY;
     };
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
-  }, []);
+    checkScrollContext();
+    window.addEventListener('scroll', checkScrollContext, { passive: true });
+    window.addEventListener('resize', checkScrollContext, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', checkScrollContext);
+      window.removeEventListener('resize', checkScrollContext);
+    };
+  }, [currentPage]);
 
   // Close on Escape key
   useEffect(() => {
@@ -542,13 +550,36 @@ export default function Navbar({ onReplayPreloader, preloaderDone }) {
     });
   };
 
-  // Click Menu Link: parabolic dot jump + smooth scroll to target section
-  const handleLinkClick = (e, idx, href) => {
+  // Keep active dot synced when currentPage changes externally
+  useEffect(() => {
+    if (currentPage === 'album') {
+      setActiveIndex(1);
+    } else if (activeIndex === 1 && currentPage === 'home') {
+      setActiveIndex(0);
+    }
+  }, [currentPage]);
+
+  // Click Menu Link: parabolic dot jump + page navigation / smooth scroll to target section
+  const handleLinkClick = (e, idx, item) => {
     e.preventDefault();
     const dotEl = dotRef.current;
     const targetLink = linkRefs.current[idx];
+    const { href, page } = item;
 
     setActiveIndex(idx);
+
+    const navigateAfterClose = () => {
+      if (onNavigate) {
+        onNavigate(page, href);
+      } else {
+        const targetSection = document.querySelector(href);
+        if (targetSection) {
+          targetSection.scrollIntoView({ behavior: 'smooth' });
+        } else if (href === '#top') {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+      }
+    };
 
     if (dotEl && targetLink) {
       const targetY = targetLink.offsetTop + targetLink.offsetHeight / 2 - dotEl.offsetHeight / 2;
@@ -556,14 +587,7 @@ export default function Navbar({ onReplayPreloader, preloaderDone }) {
         .timeline({
           onComplete: () => {
             toggleMenu(false);
-            setTimeout(() => {
-              const targetSection = document.querySelector(href);
-              if (targetSection) {
-                targetSection.scrollIntoView({ behavior: 'smooth' });
-              } else if (href === '#top') {
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }
-            }, 350);
+            setTimeout(navigateAfterClose, 320);
           },
         })
         .to(dotEl, {
@@ -584,6 +608,7 @@ export default function Navbar({ onReplayPreloader, preloaderDone }) {
         );
     } else {
       toggleMenu(false);
+      setTimeout(navigateAfterClose, 320);
     }
   };
 
@@ -633,7 +658,9 @@ export default function Navbar({ onReplayPreloader, preloaderDone }) {
       <header
         id="site-nav"
         ref={navRef}
-        className={`site-nav no-ticker ${menuOpen ? 'open' : ''} ${navAway ? 'away' : ''}`}
+        className={`site-nav no-ticker ${menuOpen ? 'open' : ''} ${navAway ? 'away' : ''} ${
+          inBody ? 'scrolled-body' : ''
+        }`}
       >
         <nav className="nav-inner" aria-label="Main navigation">
           {/* Right Menu Trigger Button (`#nav-burger`) — 3 Lines ↔ Striped Heart ↔ Broken Heart */}
@@ -706,7 +733,7 @@ export default function Navbar({ onReplayPreloader, preloaderDone }) {
                   aria-current={activeIndex === idx ? 'page' : undefined}
                   onPointerEnter={() => handleLinkEnter(idx)}
                   onPointerLeave={() => handleLinkLeave(idx)}
-                  onClick={(e) => handleLinkClick(e, idx, item.href)}
+                  onClick={(e) => handleLinkClick(e, idx, item)}
                 >
                   <span className="sr-only">{item.label}</span>
                   {item.label.split('').map((ch, cIdx) => (
@@ -748,36 +775,6 @@ export default function Navbar({ onReplayPreloader, preloaderDone }) {
                   </li>
                 ))}
               </ul>
-            </div>
-
-            <div
-              ref={(el) => (footerDivRefs.current[1] = el)}
-              className="takeover-credit-row"
-            >
-              <span className="label">
-                handmade with <span className="nav-made-heart">🫀</span> and{' '}
-                <span className="nav-made-brain">🧠</span> and
-                <span className="nav-made-cc">
-                  <svg
-                    className="cc-mark"
-                    viewBox="0 0 16 10"
-                    role="img"
-                    aria-label="claude code"
-                    style={{
-                      display: 'inline-block',
-                      height: '0.682em',
-                      width: '1.0912em',
-                      verticalAlign: 0,
-                    }}
-                  >
-                    <path
-                      fill="#D97757"
-                      fillRule="evenodd"
-                      d="M2 0H14V4H16V6H14V8H13V10H12V8H11V10H10V8H6V10H5V8H4V10H3V8H2V6H0V4H2ZM4 2V4H5V2ZM11 2V4H12V2Z"
-                    />
-                  </svg>
-                </span>
-              </span>
             </div>
           </div>
         </div>

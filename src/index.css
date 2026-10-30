@@ -38,7 +38,7 @@
   --vp-ref: 1440px;
   --vp-scale: 1;
   --nav-h: calc(56px * var(--vp-scale));
-  --ticker-h: 44px;
+  --ticker-h: 0px;
 
   --h3: calc(clamp(52px, calc(32.31px + 5.05vw), 105px) * var(--vp-scale));
   --lh-monument: 0.95;

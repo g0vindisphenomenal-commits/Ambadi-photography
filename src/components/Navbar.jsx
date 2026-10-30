@@ -281,16 +281,15 @@ export default function Navbar({ onReplayPreloader, preloaderDone }) {
 
   // Navbar initial entrance after preloader completes
   useEffect(() => {
-    if (preloaderDone && logoRef.current && burgerRef.current) {
+    if (preloaderDone && burgerRef.current) {
       gsap.fromTo(
-        [logoRef.current, burgerRef.current],
+        burgerRef.current,
         { opacity: 0, y: -14 },
         {
           opacity: 1,
           y: 0,
           duration: 0.6,
           ease: 'power3.out',
-          stagger: 0.07,
           clearProps: 'opacity,transform',
         }
       );
@@ -570,97 +569,14 @@ export default function Navbar({ onReplayPreloader, preloaderDone }) {
 
   return (
     <>
-      {/* 1A. Top Announcement Marquee Bar (`.gsap-ticker`) */}
-      {tickerOpen && (
-        <div className={`gsap-ticker micro ${menuOpen ? 'is-hidden' : ''}`}>
-          <div className="gsap-ticker-viewport">
-            <div className="gsap-ticker-track">
-              {[0, 1].map((runIdx) => (
-                <span
-                  key={runIdx}
-                  className="gsap-ticker-run"
-                  aria-hidden={runIdx === 1 ? 'true' : undefined}
-                >
-                  {[0, 1, 2, 3, 4].map((itemIdx) => (
-                    <span key={itemIdx} className="gsap-ticker-item">
-                      <span>AMBADI PHOTOGRAPHY IS NOW ON THE SHOWCASE PAGE OF GSAP!!!</span>
-                      <svg className="gsap-ticker-heart" viewBox="0 0 24 24" aria-hidden="true">
-                        <path d="M12 21s-7.5-4.6-9.6-9.3C.9 8.3 3 4.5 6.6 4.5c2.2 0 3.6 1.3 5.4 3.3 1.8-2 3.2-3.3 5.4-3.3 3.6 0 5.7 3.8 4.2 7.2C19.5 16.4 12 21 12 21z" />
-                      </svg>
-                    </span>
-                  ))}
-                </span>
-              ))}
-            </div>
-          </div>
-
-          <button
-            type="button"
-            className="gsap-ticker-replay"
-            onClick={onReplayPreloader}
-            title="Replay Preloader Strobe"
-          >
-            ↻ REPLAY INTRO
-          </button>
-
-          <button
-            type="button"
-            className="gsap-ticker-close"
-            aria-label="Dismiss announcement"
-            onClick={() => setTickerOpen(false)}
-          >
-            <svg viewBox="0 0 10 10" width="9" height="9" aria-hidden="true">
-              <path
-                d="M1 1l8 8M9 1l-8 8"
-                stroke="currentColor"
-                strokeWidth="1.6"
-                strokeLinecap="round"
-              />
-            </svg>
-          </button>
-        </div>
-      )}
-
-      {/* 1B. Main Header Bar (`header#site-nav`) */}
+      {/* Main Header Bar (`header#site-nav`) */}
       <header
         id="site-nav"
         ref={navRef}
-        className={`site-nav ${menuOpen ? 'open' : ''} ${navAway ? 'away' : ''} ${
-          !tickerOpen ? 'no-ticker' : ''
-        }`}
+        className={`site-nav no-ticker ${menuOpen ? 'open' : ''} ${navAway ? 'away' : ''}`}
       >
         <nav className="nav-inner" aria-label="Main navigation">
-          {/* 1C. Left Signature Brand Logo (`Ambadi`) */}
-          <button
-            ref={logoRef}
-            type="button"
-            className="nav-logo tap"
-            aria-label="Ambadi Home"
-            onClick={handleLogoClick}
-          >
-            <svg
-              className="logo-svg"
-              viewBox="0 0 310 110"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              {/* Handwritten calligraphic signature "Ambadi" with heart accent */}
-              <path
-                d="M22 86C29 61 45 22 56 18C61 16 63 32 61 52C59 71 58 84 63 85C68 86 79 67 86 55M32 63C46 58 67 53 78 52M88 83C91 69 96 53 100 52C104 51 105 65 104 78C107 63 113 51 118 52C122 53 122 66 121 79C124 64 131 52 136 53C141 54 139 74 143 81C147 87 156 76 162 64M168 20C166 42 162 72 163 83C167 66 177 51 186 53C194 55 193 74 182 82C173 88 164 84 163 79M218 56C210 51 198 61 198 74C198 85 207 86 216 74C218 71 220 62 221 55C219 69 219 82 225 84C231 85 239 74 244 64M269 56C260 51 248 62 248 75C248 85 258 86 266 73C271 65 276 34 279 18C275 43 271 75 276 82C281 87 289 76 294 63C292 73 292 82 298 83C302 84 306 77 308 71"
-                stroke="currentColor"
-                strokeWidth="7.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              {/* Signature heart over the 'i' */}
-              <path
-                d="M298 42C298 42 290 36 288 30C286 25 289 20 294 20C297 20 299 22 301 25C303 22 305 20 308 20C313 20 315 25 313 30C311 36 298 42 298 42Z"
-                fill="currentColor"
-              />
-            </svg>
-          </button>
-
-          {/* 1D. Right Menu Trigger Button (`#nav-burger`) — 3 Lines ↔ Striped Heart ↔ Broken Heart */}
+          {/* Right Menu Trigger Button (`#nav-burger`) — 3 Lines ↔ Striped Heart ↔ Broken Heart */}
           <button
             id="nav-burger"
             ref={burgerRef}
@@ -800,3 +716,4 @@ export default function Navbar({ onReplayPreloader, preloaderDone }) {
     </>
   );
 }
+

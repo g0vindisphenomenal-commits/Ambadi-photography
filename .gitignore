@@ -1,0 +1,10 @@
+node_modules
+dist
+.DS_Store
+*.local
+
+# Reference screen recordings in root (keep built preloader video in public/videos/)
+hamburger menu.mp4
+hero section and body ignore header.mp4
+prealoder video for build.mp4
+screen record of reference preloader.mp4

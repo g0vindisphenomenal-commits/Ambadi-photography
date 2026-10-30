@@ -121,6 +121,7 @@ export default function Navbar({ onReplayPreloader, preloaderDone }) {
   const logoRef = useRef(null);
   const burgerRef = useRef(null);
   const heartRef = useRef(null);
+  const closeTypoRef = useRef(null);
   const halfLRef = useRef(null);
   const halfRRef = useRef(null);
   const leftPathsRef = useRef([]);
@@ -368,6 +369,7 @@ export default function Navbar({ onReplayPreloader, preloaderDone }) {
       if (menuTlRef.current) menuTlRef.current.kill();
 
       const takeoverEl = takeoverRef.current;
+      const closeTypoEl = closeTypoRef.current;
       const s = progressProxyRef.current;
       const g = 160 * vpScale();
       const navLinks = linkRefs.current.filter(Boolean);
@@ -381,9 +383,6 @@ export default function Navbar({ onReplayPreloader, preloaderDone }) {
         document.documentElement.style.overflow = 'hidden';
         setNavAway(false);
 
-        // Ensure burger is morphed to heart before splitting
-        morphToHeart(true);
-
         if (takeoverEl) {
           takeoverEl.hidden = false;
           gsap.set(takeoverEl, { x: 0 });
@@ -395,6 +394,11 @@ export default function Navbar({ onReplayPreloader, preloaderDone }) {
           syncMenuGeometry(activeIndex);
 
           gsap.set([...navLinks, ...socialItems], { opacity: 0, x: g });
+          if (closeTypoEl) {
+            gsap.set(closeTypoEl, { opacity: 0, x: g * 0.4 });
+            const closeChars = closeTypoEl.querySelectorAll('.ch');
+            gsap.set(closeChars, { y: '0em' });
+          }
           if (photoEl) gsap.set(photoEl, { opacity: 0, x: g, xPercent: -50, yPercent: -100 });
           gsap.set(footerDivs, { opacity: 0, y: g });
           if (dotEl) gsap.set(dotEl, { opacity: 0, x: g });
@@ -415,6 +419,7 @@ export default function Navbar({ onReplayPreloader, preloaderDone }) {
             },
             0
           )
+            .to(closeTypoEl, { opacity: 1, x: 0, duration: 0.85 }, 0.55)
             .to(navLinks, { opacity: 1, x: 0, duration: 1, stagger: 0.1 }, 0.8)
             .to(dotEl, { opacity: 1, x: 0, duration: 1 }, 0.8 + 0.1 * activeIndex)
             .to(photoEl, { opacity: 1, x: 0, duration: 1 }, 0.8)
@@ -426,6 +431,7 @@ export default function Navbar({ onReplayPreloader, preloaderDone }) {
         document.documentElement.style.overflow = '';
 
         const allAnimated = [
+          closeTypoEl,
           ...navLinks,
           photoEl,
           dotEl,
@@ -465,20 +471,42 @@ export default function Navbar({ onReplayPreloader, preloaderDone }) {
           );
       }
     },
-    [activeIndex, applyBurgerRestState, morphToHeart, syncMenuGeometry, updateClipAndHeart, vpScale]
+    [activeIndex, applyBurgerRestState, syncMenuGeometry, updateClipAndHeart, vpScale]
   );
 
-  // Hover handlers on Hamburger Button
+  // Hover handlers on Hamburger / Typographic CLOSE Button
   const handleBurgerEnter = () => {
     isHoveredRef.current = true;
-    if (!menuOpenRef.current) {
+    if (menuOpenRef.current) {
+      if (closeTypoRef.current) {
+        const chars = closeTypoRef.current.querySelectorAll('.ch');
+        gsap.to(chars, {
+          y: '-1.1em',
+          duration: 1,
+          ease: 'power4.out',
+          stagger: { each: 0.05, from: 'random' },
+          overwrite: true,
+        });
+      }
+    } else {
       morphToHeart(false);
     }
   };
 
   const handleBurgerLeave = () => {
     isHoveredRef.current = false;
-    if (!menuOpenRef.current) {
+    if (menuOpenRef.current) {
+      if (closeTypoRef.current) {
+        const chars = closeTypoRef.current.querySelectorAll('.ch');
+        gsap.to(chars, {
+          y: '0em',
+          duration: 1,
+          ease: 'power4.out',
+          stagger: { each: 0.05, from: 'random' },
+          overwrite: true,
+        });
+      }
+    } else {
       if (heartbeatTlRef.current) heartbeatTlRef.current.pause();
       if (heartRef.current) {
         gsap.to(heartRef.current, { scale: 1, duration: 0.25, ease: 'power2.out' });
@@ -648,6 +676,13 @@ export default function Navbar({ onReplayPreloader, preloaderDone }) {
                   ))}
                 </svg>
               </i>
+            </span>
+            <span ref={closeTypoRef} className="nav-close-typo" aria-hidden="true">
+              {'CLOSE'.split('').map((ch, idx) => (
+                <span key={idx} className="ch">
+                  {ch}
+                </span>
+              ))}
             </span>
           </button>
         </nav>

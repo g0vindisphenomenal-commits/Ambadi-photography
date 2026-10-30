@@ -470,6 +470,54 @@ video {
   aspect-ratio: 300 / 238;
   pointer-events: none;
   transform-origin: 50% 55%;
+  transition: opacity 0.25s var(--ease-site);
+}
+
+.site-nav.open .nav-heart {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.site-nav.open .nav-burger {
+  width: auto;
+  min-width: 44px;
+  margin-right: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.nav-close-typo {
+  --close-room: 0.03em;
+  display: none;
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 3.2vw, 3.25rem);
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0;
+  line-height: var(--lh-monument);
+  height: calc(1em * var(--lh-monument) + var(--close-room));
+  padding-top: var(--close-room);
+  overflow: clip;
+  color: var(--spring);
+  text-shadow: 0 1.1em;
+  transition: color 0.35s var(--ease-site);
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.site-nav.open .nav-close-typo {
+  display: block;
+}
+
+.site-nav.open .nav-burger:hover .nav-close-typo,
+.site-nav.open .nav-burger:focus-visible .nav-close-typo {
+  color: var(--cinnabar);
+}
+
+.nav-close-typo .ch {
+  display: inline-block;
+  will-change: transform;
 }
 
 .nav-burger .half-l,
